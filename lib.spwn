@@ -1,0 +1,59 @@
+// SPWN script that converts the Mandelbrot set to a Geometry Dash level
+// made by Cosh-X (remastered by SpeckyYT)
+// All the pixels are colored after the number of iterations that z takes to diverge past the value of 2
+
+extract obj_props
+
+return (
+    x:@number = 0,
+    y:@number = 0,
+    width:@number = 50,
+    height:@number = 50,
+    scaling:@number = 1,
+    iterations:@number = 50,
+    zoom:@number = 1.25,
+    color:@color = ?c,
+    setColor:@bool = true,
+    groups:[@group]|@group = [],
+    log:@bool = true,
+){
+    buildProcess = (percent:@number){
+        if log {
+            $.print("Building: {}%".fmt(percent))
+        }
+    }
+    for xi in ..width {
+        for yi in ..height {
+            let c = @complex::new((-2 + (2 * zoom / width) * xi), (zoom - (2 * zoom / height) * yi))
+            let z = @complex::new(0)
+            let pixel = obj {
+                OBJ_ID: 211,
+                X: 15 * scaling + x + 30 * scaling * xi,
+                Y: 15 * scaling + y + 30 * scaling * yi,
+                COLOR: color,
+                SCALING: scaling,
+                HVS_ENABLED: true,
+                GROUPS: groups,
+            }
+            for i in 0..(iterations+1) {
+                if z.abs() > 2 {
+                    let hue = $.floor(240 * i / iterations)
+                    if hue > 180 {hue = hue - 360}
+                    pixel.set(HVS, "{}a1a1a0a0".fmt(hue))
+                    break
+                }
+                if i >= iterations {
+                    pixel.set(HVS, "0a0a0a0a0")
+                    break
+                }
+                z = z ^ 2 + c
+            }
+            $.add(pixel)
+        }
+        buildProcess(100 * xi / width)
+    }
+    buildProcess(100)
+    if setColor {
+        -> color.set(255,0,0)
+    }
+}
